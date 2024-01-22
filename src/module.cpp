@@ -1,4 +1,3 @@
-#include <type_traits>
 #include <vector>
 
 #define PY_SSIZE_T_CLEAN
@@ -8,9 +7,11 @@
 #include <game/connect.hpp>
 
 
-// TODO __hash__, __eq__
-// TODO __lt__
+// TODO use unnamed namespace?
+// TODO __hash__
 // TODO __repr__ / __str__
+// TODO release GIL when calling some operations
+// TODO add noexcept in many locations, to ensure that Traits are also no except
 
 
 template <typename T>
@@ -36,22 +37,11 @@ constexpr bool _richcompare(T comparison, int op) {
 template <typename Traits>
 struct Definition {
 
-	using Context = typename Traits::Context;
     using State = typename Traits::State;
 	using Action = typename Traits::Action;
 
-    // TODO probably need to remove this restriction
-    static_assert(std::is_trivial_v<State>);
-    static_assert(std::is_trivial_v<Action>);
-
-    struct ContextObject {
-        PyObject_HEAD
-        Context value;
-    };
-
     struct StateObject {
         PyObject_HEAD
-        ContextObject* context;
         State value;
     };
 
@@ -61,47 +51,32 @@ struct Definition {
         Action value;
     };
 
-    inline static PyTypeObject* Context_Type = NULL;
     inline static PyTypeObject* State_Type = NULL;
     inline static PyTypeObject* Action_Type = NULL;
 
-    static int Context_init(ContextObject* self, PyObject* args, PyObject* kwargs) {
-        new (&self->value) Context();
-        return 0;
-    }
+    // TODO add noexcept everywhere?
 
-    static void Context_dealloc(ContextObject* self) {
-        self->value.~Context();
-        Py_TYPE(self)->tp_free((PyObject*)self);
-    }
-
-    static PyObject* Context_sample_initial_state(ContextObject* self, PyObject*) {
+    static PyObject* State_sample_initial_state(PyObject* cls, PyObject*) {
         StateObject* state = PyObject_New(StateObject, State_Type);
         if (state) {
-            state->context = self;
-            state->value = self->value.sample_initial_state();
-            Py_INCREF(self);
+            new (&state->value) State();
+            state->value.initialize();
         }
         return (PyObject*)state;
     }
 
     static void State_dealloc(StateObject* self) {
-        Py_DECREF(self->context);
+        self->value.~State();
         Py_TYPE(self)->tp_free((PyObject*)self);
     }
 
-    static int State_traverse(StateObject* self, visitproc visit, void* arg) {
-        Py_VISIT(self->context);
-        return 0;
-    }
-
     static PyObject* State_player(StateObject* self, void*) {
-        unsigned player = self->context->value.get_player(self->value);
+        unsigned player = self->value.get_player();
         return PyLong_FromUnsignedLong(player);
     }
 
     static PyObject* State_has_ended(StateObject* self, void*) {
-        bool has_ended = self->context->value.has_ended(self->value);
+        long has_ended = self->value.has_ended();
         return PyBool_FromLong(has_ended);
     }
 
@@ -113,7 +88,7 @@ struct Definition {
     static PyObject* State_actions(StateObject* self, void*) {
         // TODO ideally, should reuse the same vector, to avoid allocation
         std::vector<Action> actions;
-        self->context->value.get_actions(actions, self->value);
+        self->value.get_actions(actions);
         size_t count = actions.size();
         PyObject* tuple = PyTuple_New(count);
         if (tuple) {
@@ -121,7 +96,7 @@ struct Definition {
                 ActionObject* action = PyObject_New(ActionObject, Action_Type);
                 // TODO check NULL
                 action->state = self;
-                action->value = actions[i];
+                new (&action->value) Action(actions[i]);
                 Py_INCREF(self);
                 PyTuple_SET_ITEM(tuple, i, action);
             }
@@ -134,11 +109,18 @@ struct Definition {
             Py_RETURN_NOTIMPLEMENTED;
         State& left = ((StateObject*)self)->value;
         State& right = ((StateObject*)other)->value;
+        // TODO can only compare states that share the same context?
         bool value = _richcompare(left <=> right, op);
         return PyBool_FromLong(value);
     }
 
+    static Py_hash_t State_hash(StateObject* self) {
+        // TODO
+        return 0;
+    }
+
     static void Action_dealloc(ActionObject* self) {
+        self->value.~Action();
         Py_DECREF(self->state);
         Py_TYPE(self)->tp_free((PyObject*)self);
     }
@@ -151,40 +133,28 @@ struct Definition {
     static PyObject* Action_sample_next_state(ActionObject* self, PyObject*) {
         StateObject* state = PyObject_New(StateObject, State_Type);
         if (state) {
-            ContextObject* context = self->state->context;
-            state->context = context;
-            state->value = context->value.sample_next_state(self->state->value, self->value);
-            Py_INCREF(context);
+            new (&self->value) State(self->state->value);
+            state->value.apply(self->value);
         }
         return (PyObject*)state;
     }
 
+    static PyObject* Action_richcompare(PyObject* self, PyObject* other, int op) {
+        if (Py_TYPE(other) != Action_Type)
+            Py_RETURN_NOTIMPLEMENTED;
+        // TODO
+        return PyBool_FromLong(0);
+    }
+
+    static Py_hash_t Action_hash(ActionObject* self) {
+        // TODO
+        return 0;
+    }
+
     static bool define(PyObject* module) {
 
-        static PyMethodDef Context_methods[] = {
-            {"sample_initial_state", (PyCFunction)Context_sample_initial_state, METH_NOARGS, NULL},
-            {NULL}
-        };
-
-        static PyType_Slot Context_slots[] = {
-            {Py_tp_new, PyType_GenericNew},
-            {Py_tp_init, Context_init},
-            {Py_tp_dealloc, (destructor)Context_dealloc},
-            {Py_tp_methods, Context_methods},
-            {0, NULL}
-        };
-
-        static PyType_Spec Context_spec = {
-            "game._core.Context",
-            sizeof(ContextObject),
-            0,
-            Py_TPFLAGS_DEFAULT,
-            Context_slots
-        };
-
-        Context_Type = (PyTypeObject*)PyType_FromSpec(&Context_spec);
-        if (PyModule_AddObjectRef(module, "Context", (PyObject*)Context_Type) < 0)
-            return false;
+        // TODO properly name classes, so that there is no name clash when having more than one game
+        // TODO maybe make Action inner classes?
 
         static PyGetSetDef State_getset[] = {
             {"player", (getter)State_player, NULL, NULL, NULL},
@@ -193,12 +163,18 @@ struct Definition {
             {NULL}
         };
 
+        static PyMethodDef State_methods[] = {
+            {"sample_initial_state", (PyCFunction)State_sample_initial_state, METH_NOARGS | METH_CLASS, NULL},
+            {NULL}
+        };
+
         static PyType_Slot State_slots[] = {
             {Py_tp_new, PyType_GenericNew},
             {Py_tp_dealloc, (destructor)State_dealloc},
-            {Py_tp_traverse, State_traverse},
             {Py_tp_getset, State_getset},
+            {Py_tp_methods, State_methods},
             {Py_tp_richcompare, State_richcompare},
+            {Py_tp_hash, (hashfunc)State_hash},
             {0, NULL}
         };
 
@@ -224,7 +200,8 @@ struct Definition {
             {Py_tp_dealloc, (destructor)Action_dealloc},
             {Py_tp_traverse, Action_traverse},
             {Py_tp_methods, Action_methods},
-            // TODO {Py_tp_richcompare, Action_richcompare},
+            {Py_tp_richcompare, Action_richcompare},
+            {Py_tp_hash, (hashfunc)Action_hash},
             {0, NULL}
         };
 
@@ -251,9 +228,6 @@ bool define(PyObject* module) {
 
 
 static int module_exec(PyObject* module) {
-
-    PyModule_AddIntConstant(module, "X", 42);
-
     if (define(module))
         return 0;
     Py_XDECREF(module);

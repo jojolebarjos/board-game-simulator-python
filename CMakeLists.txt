@@ -17,10 +17,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(game)
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-#find_package(pybind11 CONFIG REQUIRED)
 
 python_add_library(_core MODULE src/module.cpp WITH_SOABI)
-#target_link_libraries(_core PRIVATE game pybind11::headers)
 target_link_libraries(_core PRIVATE game Python::Module)
 
 install(TARGETS _core DESTINATION ${SKBUILD_PROJECT_NAME})
