@@ -402,9 +402,7 @@ struct Definition {
         return hash;
     }
 
-    static bool define(PyObject* module) noexcept {
-
-        // TODO properly name classes, so that there is no name clash when having more than one game
+    static bool define(PyObject* module, std::string const& name) noexcept {
 
         static PyGetSetDef State_getset[] = {
             {"player", (getter)State_player, NULL, NULL, NULL},
@@ -429,8 +427,10 @@ struct Definition {
             {0, NULL}
         };
 
+        static std::string State_name = "game._core." + name + "State";
+
         static PyType_Spec State_spec = {
-            "game._core.State",
+            State_name.c_str(),
             sizeof(StateObject),
             0,
             Py_TPFLAGS_DEFAULT | Py_TPFLAGS_DISALLOW_INSTANTIATION,
@@ -438,7 +438,7 @@ struct Definition {
         };
 
         State_Type = (PyTypeObject*)PyType_FromSpec(&State_spec);
-        if (PyModule_AddObjectRef(module, "State", (PyObject*)State_Type) < 0)
+        if (PyModule_AddObjectRef(module, &State_name[11], (PyObject*)State_Type) < 0)
             return false;
 
         static PyMethodDef Action_methods[] = {
@@ -457,8 +457,10 @@ struct Definition {
             {0, NULL}
         };
 
+        static std::string Action_name = "game._core." + name + "Action";
+
         static PyType_Spec Action_spec = {
-            "game._core.Action",
+            Action_name.c_str(),
             sizeof(ActionObject),
             0,
             Py_TPFLAGS_DEFAULT | Py_TPFLAGS_DISALLOW_INSTANTIATION,
@@ -466,7 +468,7 @@ struct Definition {
         };
 
         Action_Type = (PyTypeObject*)PyType_FromSpec(&Action_spec);
-        if (PyModule_AddObjectRef(module, "Action", (PyObject*)Action_Type) < 0)
+        if (PyModule_AddObjectRef(module, &Action_name[11], (PyObject*)Action_Type) < 0)
             return false;
 
         return true;
@@ -475,7 +477,8 @@ struct Definition {
 
 
 bool define(PyObject* module) {
-    return Definition<game::connect::Traits<6, 7, 4>>::define(module);
+    return
+        Definition<game::connect::Traits<6, 7, 4>>::define(module, "Connect");
 }
 
 
