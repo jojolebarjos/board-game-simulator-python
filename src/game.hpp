@@ -30,8 +30,6 @@ constexpr bool richcompare(T comparison, int op) {
 }
 
 
-
-
 template <typename _Traits>
 struct Game {
 
@@ -56,8 +54,8 @@ struct Game {
         Action value;
     };
 
-    inline static PyTypeObject* State_Type = NULL;
-    inline static PyTypeObject* Action_Type = NULL;
+    inline static PyTypeObject* State_Type = nullptr;
+    inline static PyTypeObject* Action_Type = nullptr;
 
     static void check_state(StateObject* self) {
         if (self->value.player < -1 || self->value.player > 1)
@@ -114,12 +112,15 @@ struct Game {
         return PyLong_FromLong(player);
     }
 
-    // TODO reward (list or numpy array?)
+    static PyObject* State_reward(StateObject* self, void*) noexcept {
+        auto reward = Traits::get_reward(self->value);
+        return to_object(reward).release();
+    }
 
     static PyObject* State_get_tensors(StateObject* self, PyObject* args) noexcept {
         PyObject* mode = Py_None;
         if (!PyArg_ParseTuple(args, "|O:get_tensors", &mode))
-            return NULL;
+            return nullptr;
         try {
             // TODO handle mode
             auto tuple = Traits::get_tensors(self->value);
@@ -143,11 +144,9 @@ struct Game {
                     ActionObject* action = PyObject_New(ActionObject, Action_Type);
                     if (!action) {
                         Py_DECREF(tuple);
-                        return NULL;
+                        return nullptr;
                     }
                     new (&action->value) Action(actions[i]);
-                    if (action->value > 6)
-                        return PyErr_Format(PyExc_RuntimeError, "XXX %d", action->value);
                     action->state = self;
                     Py_INCREF(self);
                     PyTuple_SET_ITEM(tuple, i, action);
@@ -161,8 +160,6 @@ struct Game {
     }
 
     static PyObject* Action_sample_next_state(ActionObject* self, PyObject*) noexcept {
-        if (self->value > 6)
-            return PyErr_Format(PyExc_RuntimeError, "YYY %d", self->value);
         StateObject* state = PyObject_New(StateObject, State_Type);
         if (state) {
             new (&state->value) State(self->state->value);
@@ -211,7 +208,7 @@ struct Game {
         }
         catch (python_exception) {
             Py_XDECREF(state);
-            return NULL;
+            return nullptr;
         }
         catch (const std::exception& e) {
             Py_XDECREF(state);
@@ -224,7 +221,7 @@ struct Game {
         StateObject* state;
         PyObject* arg;
         if (!PyArg_ParseTuple(args, "O!O:from_json", State_Type, &state, &arg))
-            return NULL;
+            return nullptr;
         ActionObject* action = nullptr;
         try {
             auto j = from_object<nlohmann::json>(arg);
@@ -239,7 +236,7 @@ struct Game {
         }
         catch (python_exception) {
             Py_XDECREF(action);
-            return NULL;
+            return nullptr;
         }
         catch (const std::exception& e) {
             Py_XDECREF(action);
@@ -289,6 +286,8 @@ struct Game {
         static PyGetSetDef State_getset[] = {
             {"player", (getter)State_player, NULL, NULL, NULL},
             {"has_ended", (getter)State_has_ended, NULL, NULL, NULL},
+            {"winner", (getter)State_winner, NULL, NULL, NULL},
+            {"reward", (getter)State_reward, NULL, NULL, NULL},
             {"actions", (getter)State_actions, NULL, NULL, NULL},
             {NULL}
         };
