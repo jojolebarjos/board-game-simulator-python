@@ -1,156 +1,19 @@
+#include "./common.hpp"
+#include "./object.hpp"
+
 #include <string>
 #include <type_traits>
 #include <vector>
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-
+#include <game/tensor.hpp>
 #include <game/connect.hpp>
 
 
 namespace {
 
 
-using json = nlohmann::json;
-
-
-struct python_exception {};
-
-
-PyObject* to_python(json const& j) noexcept {
-    switch (j.type()) {
-
-    case json::value_t::null:
-        Py_RETURN_NONE;
-
-    case json::value_t::object: {
-        auto const& object = *j.get_ptr<json::object_t const*>();
-        PyObject* dict = PyDict_New();
-        if (!dict)
-            return NULL;
-        for (const auto& [key, value] : object) {
-            PyObject* item = to_python(value);
-            if (!item) {
-                Py_DECREF(dict);
-                return NULL;
-            }
-            PyDict_SetItemString(dict, key.c_str(), item);
-        }
-        return dict;
-    }
-
-    case json::value_t::array: {
-        auto const& array = *j.get_ptr<json::array_t const*>();
-        size_t size = array.size();
-        PyObject* list = PyList_New(size);
-        if (!list)
-            return NULL;
-        for (size_t i = 0; i < size; ++i) {
-            PyObject* item = to_python(array[i]);
-            if (!item) {
-                Py_DECREF(item);
-                return NULL;
-            }
-            PyList_SET_ITEM(list, i, item);
-        }
-        return list;
-    }
-
-    case json::value_t::string: {
-        auto const& value = *j.get_ptr<json::string_t const*>();
-        return PyUnicode_FromString(value.c_str());
-    }
-
-    case json::value_t::boolean: {
-        auto const& value = *j.get_ptr<json::boolean_t const*>();
-        return PyBool_FromLong(value);
-    }
-
-    case json::value_t::number_integer: {
-        auto const& value = *j.get_ptr<json::number_integer_t const*>();
-        return PyLong_FromLongLong(value);
-    }
-
-    case json::value_t::number_unsigned: {
-        auto const& value = *j.get_ptr<json::number_unsigned_t const*>();
-        return PyLong_FromUnsignedLongLong(value);
-    }
-
-    case json::value_t::number_float: {
-        auto const& value = *j.get_ptr<json::number_float_t const*>();
-        return PyFloat_FromDouble(value);
-    }
-
-    default:
-        return PyErr_Format(PyExc_NotImplementedError, "JSON");
-    }
-}
-
-
-json from_python(PyObject* x) {
-
-    if (x == Py_None)
-        return nullptr;
-
-    if (PyDict_Check(x)) {
-        json j(json::value_t::object);
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(x, &pos, &key, &value)) {
-            char const* k = PyUnicode_AsUTF8(key);
-            if (!k)
-                throw python_exception();
-            j[k] = from_python(value);
-        }
-        return j;
-    }
-
-    if (PyList_Check(x)) {
-        json j(json::value_t::array);
-        Py_ssize_t size = PyList_GET_SIZE(x);
-        for (Py_ssize_t i = 0; i < size; ++i) {
-            PyObject* value = PyList_GET_ITEM(x, i);
-            j.push_back(from_python(value));
-        }
-        return j;
-    }
-
-    if (PyUnicode_Check(x)) {
-        char const* value = PyUnicode_AsUTF8(x);
-        if (!value)
-            throw python_exception();
-        return value;
-    }
-
-    if (x == Py_True)
-        return true;
-    if (x == Py_False)
-        return false;
-
-    if (PyLong_Check(x)) {
-        long long value = PyLong_AsLongLong(x);
-        if (value == -1 && PyErr_Occurred())
-            throw python_exception();
-        return value;
-    }
-
-    if (PyFloat_Check(x)) {
-        double value = PyFloat_AsDouble(x);
-        if (value == -1 && PyErr_Occurred())
-            throw python_exception();
-        return value;
-    }
-
-    PyErr_Format(PyExc_ValueError, "%R", x);
-    throw python_exception();
-}
-
-
-// TODO __hash__
 // TODO __repr__ / __str__
 // TODO release GIL when calling some operations
-// TODO add noexcept in many locations, to ensure that Traits are also no except
 
 
 template <typename T>
@@ -252,7 +115,19 @@ struct Definition {
 
     // TODO reward (list or numpy array?)
 
-    // TODO tensor representation (as tuple of numpy arrays / scalars)
+    static PyObject* State_get_tensors(StateObject* self, PyObject* args) noexcept {
+        PyObject* mode = Py_None;
+        if (!PyArg_ParseTuple(args, "|O:get_tensors", &mode))
+            return NULL;
+        try {
+            // TODO handle mode
+            auto tuple = Traits::get_tensors(self->value);
+            return to_object(tuple).release();
+        }
+        catch (const std::exception& e) {
+            return PyErr_Format(PyExc_RuntimeError, "internal error: %s", e.what());
+        }
+    }
 
     static PyObject* State_actions(StateObject* self, void*) noexcept {
         try {
@@ -281,7 +156,7 @@ struct Definition {
         }
     }
 
-    static PyObject* Action_sample_next_state(ActionObject* self, PyObject*) noexcept{
+    static PyObject* Action_sample_next_state(ActionObject* self, PyObject*) noexcept {
         StateObject* state = PyObject_New(StateObject, State_Type);
         if (state) {
             new (&self->value) State(self->state->value);
@@ -298,8 +173,8 @@ struct Definition {
 
     static PyObject* State_to_json(StateObject* self, PyObject*) noexcept {
         try {
-            json j = Traits::to_json(self->value);
-            return to_python(j);
+            nlohmann::json j = Traits::to_json(self->value);
+            return to_object(j).release();
         }
         catch (const std::exception& e) {
             return PyErr_Format(PyExc_RuntimeError, "internal error: %s", e.what());
@@ -308,8 +183,8 @@ struct Definition {
 
     static PyObject* Action_to_json(ActionObject* self, PyObject*) noexcept {
         try {
-            json j = Traits::to_json(self->state->value, self->value);
-            return to_python(j);
+            nlohmann::json j = Traits::to_json(self->state->value, self->value);
+            return to_object(j).release();
         }
         catch (const std::exception& e) {
             return PyErr_Format(PyExc_RuntimeError, "internal error: %s", e.what());
@@ -319,7 +194,7 @@ struct Definition {
     static PyObject* State_from_json(PyObject* cls, PyObject* arg) noexcept {
         StateObject* state = nullptr;
         try {
-            json j = from_python(arg);
+            auto j = from_object<nlohmann::json>(arg);
             state = PyObject_New(StateObject, State_Type);
             if (state) {
                 new (&state->value) State();
@@ -345,7 +220,7 @@ struct Definition {
             return NULL;
         ActionObject* action = nullptr;
         try {
-            json j = from_python(arg);
+            auto j = from_object<nlohmann::json>(arg);
             action = PyObject_New(ActionObject, Action_Type);
             if (action) {
                 new (&action->value) Action();
@@ -413,6 +288,7 @@ struct Definition {
 
         static PyMethodDef State_methods[] = {
             {"sample_initial_state", (PyCFunction)State_sample_initial_state, METH_NOARGS | METH_CLASS, NULL},
+            {"get_tensors", (PyCFunction)State_get_tensors, METH_VARARGS, NULL},
             {"to_json", (PyCFunction)State_to_json, METH_NOARGS, NULL},
             {"from_json", (PyCFunction)State_from_json, METH_O | METH_CLASS, NULL},
             {NULL}
@@ -482,6 +358,32 @@ bool define(PyObject* module) {
 }
 
 
+PyObject * foo(PyObject * self, PyObject * args) {
+    try {
+        /*
+        nlohmann::json j =
+        {
+            {"boolean", true},
+            {
+                "number", {
+                    {"integer", 42},
+                    {"floating-point", 17.23}
+                }
+            },
+            {"string", "Hello, world!"},
+            {"array", {1, 2, 3, 4, 5}},
+            {"null", nullptr}
+        };
+        */
+        game::tensor<uint16_t, 3, 4> x = {1,2,3,4,34,45,56,67,0,0,1,1};
+        return to_object(x).release();
+    }
+    catch (const std::exception& e) {
+        return PyErr_Format(PyExc_RuntimeError, "internal error: %s", e.what());
+    }
+}
+
+
 int module_exec(PyObject* module) {
     if (define(module))
         return 0;
@@ -496,11 +398,18 @@ PyModuleDef_Slot slots[] = {
 };
 
 
+static PyMethodDef methods[] = {
+    {"foo", foo, METH_VARARGS, NULL},
+    {NULL},
+};
+
+
 PyModuleDef module = {
     .m_base = PyModuleDef_HEAD_INIT,
     .m_name = "game._core",
     .m_doc = NULL,
     .m_size = 0,
+    .m_methods = methods,
     .m_slots = slots,
 };
 
@@ -509,5 +418,10 @@ PyModuleDef module = {
 
 
 PyMODINIT_FUNC PyInit__core() {
+
+    import_array();
+    if (PyErr_Occurred())
+        return NULL;
+
     return PyModuleDef_Init(&::module);
 }

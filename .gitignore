@@ -1,1 +1,6 @@
+/.vs/
+/build/
+/out/
+game.egg-info/
 *.pyc
+*.pyd
