@@ -2,5 +2,6 @@
 /build/
 /out/
 game.egg-info/
+*.pdb
 *.pyc
 *.pyd
