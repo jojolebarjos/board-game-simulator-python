@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...3.27)
+cmake_minimum_required(VERSION 3.23)
 
 project(
     ${SKBUILD_PROJECT_NAME}-py
@@ -12,7 +12,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include(FetchContent)
 FetchContent_Declare(
     game
-    SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../board-game-simulator/"
+    GIT_REPOSITORY https://github.com/jojolebarjos/board-game-simulator.git
+    GIT_TAG 7ca0f1867fff695a2a666526f577cd1dd9fd20f4
+    GIT_SHALLOW 1
 )
 FetchContent_MakeAvailable(game)
 
