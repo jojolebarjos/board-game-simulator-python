@@ -7,7 +7,6 @@
 
 
 // TODO __repr__ / __str__
-// TODO release GIL when calling some operations
 
 
 template <typename T>
@@ -27,6 +26,26 @@ constexpr bool richcompare(T comparison, int op) {
         return comparison >= 0;
     }
     return false;
+}
+
+
+struct Unlock {
+    PyThreadState *state;
+
+    Unlock() {
+        state = PyEval_SaveThread();
+    }
+
+    ~Unlock() {
+        PyEval_RestoreThread(state);
+    }
+};
+
+
+template <typename T>
+T&& unlock(T&& t) {
+    Unlock unlock;
+    return std::move(t);
 }
 
 
@@ -57,11 +76,6 @@ struct Game {
     inline static PyTypeObject* State_Type = nullptr;
     inline static PyTypeObject* Action_Type = nullptr;
 
-    static void check_state(StateObject* self) {
-        if (self->value.player < -1 || self->value.player > 1)
-            throw std::runtime_error("player");
-    }
-
     static void State_dealloc(StateObject* self) noexcept {
         self->value.~State();
         Py_TYPE(self)->tp_free((PyObject*)self);
@@ -83,6 +97,7 @@ struct Game {
         if (state) {
             new (&state->value) State();
             try {
+                Unlock unlock;
                 Traits::initialize(state->value);
             }
             catch (const std::exception& e) {
@@ -123,7 +138,7 @@ struct Game {
             return nullptr;
         try {
             // TODO handle mode
-            auto tuple = Traits::get_tensors(self->value);
+            auto tuple = unlock(Traits::get_tensors(self->value));
             return to_object(tuple).release();
         }
         catch (const std::exception& e) {
@@ -132,11 +147,13 @@ struct Game {
     }
 
     static PyObject* State_actions(StateObject* self, void*) noexcept {
-        check_state(self);
         try {
             // TODO ideally, should reuse the same vector, to avoid allocation?
             std::vector<Action> actions;
-            Traits::get_actions(self->value, actions);
+            {
+                Unlock unlock;
+                Traits::get_actions(self->value, actions);
+            }
             size_t count = actions.size();
             PyObject* tuple = PyTuple_New(count);
             if (tuple) {
@@ -164,13 +181,13 @@ struct Game {
         if (state) {
             new (&state->value) State(self->state->value);
             try {
+                Unlock unlock;
                 Traits::apply(state->value, self->value);
             }
             catch (const std::exception& e) {
                 Py_DECREF(state);
                 return PyErr_Format(PyExc_RuntimeError, "internal error: %s", e.what());
             }
-            check_state(state);
         }
         return (PyObject*)state;
     }
