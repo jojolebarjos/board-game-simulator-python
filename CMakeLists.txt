@@ -16,9 +16,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(game)
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
 python_add_library(_core MODULE src/module.cpp WITH_SOABI)
-target_link_libraries(_core PRIVATE game Python::Module)
+target_link_libraries(_core PRIVATE game Python::Module Python::NumPy)
 
 install(TARGETS _core DESTINATION ${SKBUILD_PROJECT_NAME})
