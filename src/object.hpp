@@ -88,13 +88,28 @@ Object to_object(bool value) noexcept {
 }
 
 
+Object to_object(long value) noexcept {
+    return PyLong_FromLong(value);
+}
+
+
 Object to_object(long long value) noexcept {
     return PyLong_FromLongLong(value);
 }
 
 
+Object to_object(unsigned long value) noexcept {
+    return PyLong_FromUnsignedLong(value);
+}
+
+
 Object to_object(unsigned long long value) noexcept {
     return PyLong_FromUnsignedLongLong(value);
+}
+
+
+Object to_object(float value) noexcept {
+    return PyFloat_FromDouble(value);
 }
 
 

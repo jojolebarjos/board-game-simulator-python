@@ -52,7 +52,7 @@ T&& unlock(T&& t) {
 template <typename _Traits>
 struct Game {
 
-    using Traits = typename _Traits;
+    using Traits = _Traits;
     using State = Traits::State;
 	using Action = Traits::Action;
 

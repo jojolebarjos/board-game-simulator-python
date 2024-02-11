@@ -1,7 +1,7 @@
 # Board game simulator (Python bindings)
 
 This Python module offers a framework for simulating a variety of board games, including Connect4 and Chinese Checkers.
-It is based on [this sister project](https://github.com/jojolebarjos/board-game-simulator], providing an efficient implementation tailored for reinforcement learning applications.
+It is based on [this sister project](https://github.com/jojolebarjos/board-game-simulator), providing an efficient implementation tailored for reinforcement learning applications.
 
 The library introduces a unified representation of games via states and actions.
 In each state, the current player chooses an action from a set of legal moves, resulting in a transition to a new state.
