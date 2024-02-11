@@ -166,7 +166,7 @@ struct Game {
                     new (&action->value) Action(actions[i]);
                     action->state = self;
                     Py_INCREF(self);
-                    PyTuple_SET_ITEM(tuple, i, action);
+                    PyTuple_SET_ITEM(tuple, i, (PyObject*)action);
                 }
             }
             return tuple;
