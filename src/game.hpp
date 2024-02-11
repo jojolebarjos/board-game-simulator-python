@@ -318,11 +318,11 @@ struct Game {
         };
 
         static PyType_Slot State_slots[] = {
-            {Py_tp_dealloc, (destructor)State_dealloc},
-            {Py_tp_getset, State_getset},
-            {Py_tp_methods, State_methods},
-            {Py_tp_richcompare, State_richcompare},
-            {Py_tp_hash, (hashfunc)State_hash},
+            {Py_tp_dealloc, (void*)State_dealloc},
+            {Py_tp_getset, (void*)State_getset},
+            {Py_tp_methods, (void*)State_methods},
+            {Py_tp_richcompare, (void*)State_richcompare},
+            {Py_tp_hash, (void*)State_hash},
             {0, NULL}
         };
 
@@ -348,11 +348,11 @@ struct Game {
         };
 
         static PyType_Slot Action_slots[] = {
-            {Py_tp_dealloc, (destructor)Action_dealloc},
-            {Py_tp_traverse, Action_traverse},
-            {Py_tp_methods, Action_methods},
-            {Py_tp_richcompare, Action_richcompare},
-            {Py_tp_hash, (hashfunc)Action_hash},
+            {Py_tp_dealloc, (void*)Action_dealloc},
+            {Py_tp_traverse, (void*)Action_traverse},
+            {Py_tp_methods, (void*)Action_methods},
+            {Py_tp_richcompare, (void*)Action_richcompare},
+            {Py_tp_hash, (void*)Action_hash},
             {0, NULL}
         };
 
