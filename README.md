@@ -24,6 +24,15 @@ cd board-game-simulator-python
 pip install .
 ```
 
+This module relies on [`scikit-build-core`](https://github.com/scikit-build/scikit-build-core) to use CMake as a C++ build tool.
+While it should work as-is in most cases, additional configuration may be provided to CMake, as documented [here](https://scikit-build-core.readthedocs.io/en/latest/configuration.html#configuring-cmake-arguments-and-defines).
+For instance, a specific compiler may be specified:
+
+```
+export SKBUILD_CMAKE_DEFINE="CMAKE_CXX_COMPILER=/opt/homebrew/Cellar/llvm/17.0.6/bin/clang++"
+pip install git+https://github.com/jojolebarjos/board-game-simulator-python.git
+```
+
 The following snippets provide a summary of the interface:
 
 ```py
