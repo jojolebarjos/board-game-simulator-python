@@ -1,9 +1,8 @@
 import random
 import time
 
-from game import *
+from game import Connect4State as State
 
-State = ConnectState
 
 duration = 5.0
 

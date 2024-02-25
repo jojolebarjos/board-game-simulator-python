@@ -42,7 +42,7 @@ from game import *
 
 
 # All games have the same API, choosing Connect4 here
-State = ConnectState
+State = Connect4State
 
 # A class method is provided to create a new game state
 # Note: some games do feature randomness, hence the `sample` name
@@ -78,6 +78,11 @@ Additionally, some example [`scripts`](./scripts/) and [`tests`](./tests/) are p
 python ./scripts/benchmark.py
 pytest -v
 ```
+
+Available games:
+
+ * [Connect 4](https://en.wikipedia.org/wiki/Connect_Four)
+ * [Chinese checkers](https://en.wikipedia.org/wiki/Chinese_checkers), 2 players only
 
 
 ## References
