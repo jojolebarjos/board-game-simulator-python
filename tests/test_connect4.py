@@ -2,7 +2,7 @@ import re
 
 import numpy as np
 
-from game import ConnectState as State
+from game import Connect4State as State
 
 
 def to_grid(literal):

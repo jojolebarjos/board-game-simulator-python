@@ -126,7 +126,8 @@ Object to_object(std::string const& value) noexcept {
 template<typename T, size_t... Shape>
 Object to_object(game::tensor<T, Shape...> const& value) noexcept {
     static_assert(as_dtype<T> != NPY_NOTYPE);
-    Object array = PyArray_SimpleNew(value.ndim, (npy_intp const*)value.shape, as_dtype<T>);
+    static_assert(sizeof(npy_intp) == sizeof(size_t));
+    Object array = PyArray_SimpleNew(value.shape.size(), (npy_intp const*)value.shape.data(), as_dtype<T>);
     if (array) {
         void const* src = (void const*)&value;
         void* dst = PyArray_DATA((PyArrayObject*)array.value);
@@ -141,19 +142,20 @@ Object to_object(nlohmann::json const& value) noexcept;
 
 template<typename... T>
 Object to_object(std::tuple<T...> const& value) noexcept {
-    size_t size = sizeof...(T);
-    Object tuple = PyTuple_New(size);
-    if (tuple) {
-        size_t i = 0;
-        auto set = [&](auto v) {
-            PyObject* o = to_object(v).release();
-            PyTuple_SET_ITEM(tuple.value, i++, o);
-            return o;
-        };
-        if (!std::apply(set, value))
-            return nullptr;
-    }
-    return tuple;
+
+    auto f = [](auto const&... v) -> Object {
+        size_t size = sizeof...(v);
+        Object tuple = PyTuple_New(size);
+        if (tuple) {
+            size_t i = 0;
+            PyObject* o;
+            if (!((o = to_object(v).release(), PyTuple_SET_ITEM(tuple.value, i++, o), o) && ...))
+                return nullptr;
+        }
+        return tuple;
+    };
+
+    return std::apply(f, value);
 }
 
 
@@ -308,6 +310,7 @@ nlohmann::json from_object<nlohmann::json>(Object const& object) {
     }
 
     // TODO tuple?
+    // TODO numpy array?
 
     if (PyUnicode_Check(object.value))
         return from_object<std::string>(object.value);
