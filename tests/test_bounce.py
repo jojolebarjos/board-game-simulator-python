@@ -228,3 +228,69 @@ def test_sequence():
     assert len(state.actions) == 0
     assert state.winner == 0
     assert state.reward.tolist() == [1, -1]
+
+
+def test_larger_values():
+    state, action = assert_state(
+        """
+             [*]
+         1 . . * . *
+         . . * . * .
+         . * . * . *
+         * . * . * .
+         . * . * . *
+         * . * . * .
+         . . . .[7].
+              .
+        """,
+    )
+    state = action.sample_next_state()
+
+    assert state.has_ended
+    assert len(state.actions) == 0
+    assert state.winner == 0
+    assert state.reward.tolist() == [1, -1]
+
+
+def test_block_victory():
+    state, action = assert_state(
+        """
+              .
+         1 . * .[2].
+         . . . * . *
+         2 2 2 2[*]2
+         3 . 3 . 3 .
+         . . . . . .
+         . . . . . .
+         . . . . . .
+              .
+        """,
+    )
+    state = action.sample_next_state()
+
+    assert state.has_ended
+    assert len(state.actions) == 0
+    assert state.winner == 1
+    assert state.reward.tolist() == [-1, 1]
+
+
+def test_draw():
+    state, action = assert_state(
+        """
+              .
+         . . . . . .
+         2 2 2 2 2 2
+         3 3 3 3 3 3
+         3 .[*]. 3 .
+         . * . * . .
+         * . * . * .
+         . .[3]. . *
+              .
+        """,
+    )
+    state = action.sample_next_state()
+
+    assert state.has_ended
+    assert len(state.actions) == 0
+    assert state.winner is None
+    assert state.reward.tolist() == [0, 0]
