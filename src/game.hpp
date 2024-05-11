@@ -215,7 +215,7 @@ struct Game {
     static PyObject* State_from_json(PyObject* cls, PyObject* arg) noexcept {
         StateObject* state = nullptr;
         try {
-            auto j = from_object<nlohmann::json>(arg);
+            auto j = from_object<nlohmann::json>(Object(arg, borrow));
             state = PyObject_New(StateObject, State_Type);
             if (state) {
                 new (&state->value) State();
@@ -241,7 +241,7 @@ struct Game {
             return nullptr;
         ActionObject* action = nullptr;
         try {
-            auto j = from_object<nlohmann::json>(arg);
+            auto j = from_object<nlohmann::json>(Object(arg, borrow));
             action = PyObject_New(ActionObject, Action_Type);
             if (action) {
                 new (&action->value) Action();
