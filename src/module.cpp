@@ -2,6 +2,7 @@
 #include "./object.hpp"
 #include "./game.hpp"
 
+#include <game/bounce.hpp>
 #include <game/chinese_checkers.hpp>
 #include <game/connect.hpp>
 
@@ -11,6 +12,7 @@ namespace {
 
 bool define(PyObject* module) {
     return
+        Game<game::bounce::Traits>::define(module, "Bounce") &&
         Game<game::chinese_checkers::Traits>::define(module, "ChineseCheckers") &&
         Game<game::connect::Traits<6, 7, 4>>::define(module, "Connect4");
 }

@@ -81,6 +81,7 @@ pytest -v
 
 Available games:
 
+ * "Bounce", a homebrew game I heard of. I was unable to find anything online, including the actual name...
  * [Connect 4](https://en.wikipedia.org/wiki/Connect_Four)
  * [Chinese checkers](https://en.wikipedia.org/wiki/Chinese_checkers), 2 players only
 

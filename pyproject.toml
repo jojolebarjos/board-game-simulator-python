@@ -7,7 +7,7 @@ cmake.build-type = "RelWithDebInfo"
 
 [project]
 name = "game"
-version = "0.0.2"
+version = "0.0.3"
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
@@ -18,18 +18,20 @@ extend-include = ["*.ipynb"]
 target-version = "py310"
 line-length = 88
 extend-select = [
-    "W605",   # pycodestyle: invalid-escape-sequence
-    "S102",   # flake8-bandit: exec-builtin
-    "INP",    # flake8-no-pep420
-    "PYI",    # flake8-pyi
-    "PT",     # flake8-pytest-style
-    "PGH",    # pygrep-hooks
-    "PL",     # Pylint
-    "NPY",    # NumPy-specific rules
-    "RUF",    # Ruff-specific rules
+    "W605",    # pycodestyle: invalid-escape-sequence
+    "S102",    # flake8-bandit: exec-builtin
+    "INP",     # flake8-no-pep420
+    "PYI",     # flake8-pyi
+    "PT",      # flake8-pytest-style
+    "PGH",     # pygrep-hooks
+    "PL",      # Pylint
+    "NPY",     # NumPy-specific rules
+    "RUF",     # Ruff-specific rules
 ]
 ignore = [
-    "NPY002", # numpy-legacy-random
+    "NPY002",  # numpy-legacy-random
+    "PLR2004", # magic-value-comparison
+    "PLW2901", # redefined-loop-name
 ]
 
 [tool.ruff.per-file-ignores]

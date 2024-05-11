@@ -1,7 +1,5 @@
 import regex as re
 
-import numpy as np
-
 from game import ChineseCheckersState as State
 
 
@@ -54,20 +52,6 @@ def parse(string):
     targets.sort
 
     return pieces, selections, targets
-
-
-def encode(state_or_action):
-    if isinstance(state_or_action, State):
-        state = state_or_action
-        action = None
-    elif isinstance(state_or_action, Action):
-        action = state_or_action
-        state = action.state
-    else:
-        raise TypeError
-
-    # TODO render state as string, for easier debugging
-    raise NotImplementedError
 
 
 def assert_state(state, string):
