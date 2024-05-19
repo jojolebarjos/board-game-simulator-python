@@ -17,9 +17,7 @@ def parse(string):
             steps = match.captures(1)
             rows.append(steps)
     assert len(rows) == 9
-    assert len(rows[0]) == 1
-    assert len(rows[-1]) == 1
-    assert all(len(row) == 6 for row in rows[1:-1])
+    assert all(len(row) == 6 for row in rows)
 
     # Parse rows
     grid = np.zeros((7, 6), dtype=np.int8)
@@ -108,7 +106,7 @@ def test_sequence():
     # Turn 1
     _, action = assert_state(
         """
-              .
+         . . . . . .
          1 2 3 3 2 1
          . . . . . .
          . . . . . .
@@ -116,7 +114,7 @@ def test_sequence():
          .[*]. . . .
          * . * . . .
         [1]2 3 3 2 1
-              .
+         . . . . . .
         """,
         state,
     )
@@ -125,7 +123,7 @@ def test_sequence():
     # Turn 2
     _, action = assert_state(
         """
-              .
+         . . . . . .
          1 2[3]3 2 1
          * . . . * .
          . * . * . .
@@ -133,7 +131,7 @@ def test_sequence():
          . 1 . . . .
          . . . . . .
          . 2 3 3 2 1
-              .
+         . . . . . .
         """,
         state,
     )
@@ -142,7 +140,7 @@ def test_sequence():
     # Turn 3
     _, action = assert_state(
         """
-              .
+         . . . . . .
          1 2 . 3 2 1
          . . . . . .
          . . . . . .
@@ -150,7 +148,7 @@ def test_sequence():
          * 1 * . . .
          * . * . . .
          .[2]3 3 2 1
-              .
+         . . . . . .
         """,
         state,
     )
@@ -159,7 +157,7 @@ def test_sequence():
     # Turn 4
     _, action = assert_state(
         """
-              .
+         . . . . . .
         [1]2 . 3 2 1
          * * * * . *
          . * * . * .
@@ -167,7 +165,7 @@ def test_sequence():
          . 1 . . . .
          . . . . . .
          . . 3 3 2 1
-              .
+         . . . . . .
         """,
         state,
     )
@@ -176,7 +174,7 @@ def test_sequence():
     # Turn 5
     _, action = assert_state(
         """
-              .
+         . . . . . .
          . 2 * 3 2 1
          . * . * . .
         [*]. * . * .
@@ -184,7 +182,7 @@ def test_sequence():
          * 1 * * . .
          * . * . * .
          . .[3]3 2 1
-              .
+         . . . . . .
         """,
         state,
     )
@@ -193,7 +191,7 @@ def test_sequence():
     # Turn 6
     _, action = assert_state(
         """
-              .
+         . . . . . .
          . 2 .[3]2 1
          . * . * . *
          3 . * . * .
@@ -201,7 +199,7 @@ def test_sequence():
          . 1 . * * .
          . * .[*]. .
          . . * 3 2 1
-              .
+         . . . . . .
         """,
         state,
     )
@@ -210,7 +208,7 @@ def test_sequence():
     # Turn 7
     _, action = assert_state(
         """
-             [*]
+         * .[*]. . .
          . 2 * * 2 1
          * * * * . .
          3 . * * * .
@@ -218,7 +216,7 @@ def test_sequence():
          * 1 * * * *
          * . . 3 . *
          . . . 3[2]1
-              .
+         . . . . . .
         """,
         state,
     )
@@ -233,7 +231,7 @@ def test_sequence():
 def test_larger_values():
     state, action = assert_state(
         """
-             [*]
+         . . . .[*].
          1 . . * . *
          . . * . * .
          . * . * . *
@@ -241,7 +239,7 @@ def test_larger_values():
          . * . * . *
          * . * . * .
          . . . .[7].
-              .
+         . . . . . .
         """,
     )
     state = action.sample_next_state()
@@ -253,9 +251,9 @@ def test_larger_values():
 
 
 def test_block_victory():
-    state, action = assert_state(
+    _, action = assert_state(
         """
-              .
+         . . . . . .
          1 . * .[2].
          . . . * . *
          2 2 2 2[*]2
@@ -263,7 +261,7 @@ def test_block_victory():
          . . . . . .
          . . . . . .
          . . . . . .
-              .
+         . . . . . .
         """,
     )
     state = action.sample_next_state()
@@ -275,9 +273,9 @@ def test_block_victory():
 
 
 def test_draw():
-    state, action = assert_state(
+    _, action = assert_state(
         """
-              .
+         . . . . . .
          . . . . . .
          2 2 2 2 2 2
          3 3 3 3 3 3
@@ -285,7 +283,7 @@ def test_draw():
          . * . * . .
          * . * . * .
          . .[3]. . *
-              .
+         . . . . . .
         """,
     )
     state = action.sample_next_state()
