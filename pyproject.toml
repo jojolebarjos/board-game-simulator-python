@@ -1,22 +1,23 @@
 [build-system]
-requires = ["scikit-build-core>=0.3.3", "numpy"]
+requires = ["scikit-build-core>=0.4.3", "nanobind>=1.3.2", "numpy"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 cmake.build-type = "RelWithDebInfo"
 
 [project]
-name = "game"
-version = "0.0.3"
+name = "simulator"
+version = "0.0.4"
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
 ]
 
 [tool.ruff]
-extend-include = ["*.ipynb"]
 target-version = "py310"
 line-length = 88
+
+[tool.ruff.lint]
 extend-select = [
     "W605",    # pycodestyle: invalid-escape-sequence
     "S102",    # flake8-bandit: exec-builtin
@@ -34,6 +35,6 @@ ignore = [
     "PLW2901", # redefined-loop-name
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**" = ["INP001"]
 "[!t][!e][!s][!t][!s]*/**" = ["PT"]

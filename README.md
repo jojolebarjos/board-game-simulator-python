@@ -13,7 +13,7 @@ Upon reaching a terminal state, a reward is assigned based on the outcome of the
 The library can be installed directly from GitHub:
 
 ```
-pip install git+https://github.com/jojolebarjos/board-game-simulator-python.git
+pip install git+https://github.com/jojolebarjos/board-game-simulator-python.git@0.0.4
 ```
 
 Alternatively, the repository can be downloaded locally:
@@ -38,15 +38,15 @@ The following snippets provide a summary of the interface:
 ```py
 import random
 
-from game import *
+# All games have roughly the same API, choosing Connect4 here
+from game.connect import Config, State, Action
 
+# Game-wide information is stored in a configuration object
+config = Config(6, 7, 4)
 
-# All games have the same API, choosing Connect4 here
-State = Connect4State
-
-# A class method is provided to create a new game state
+# The config acts as a factory for the inital state
 # Note: some games do feature randomness, hence the `sample` name
-state = State.sample_initial_state()
+state = config.sample_initial_state()
 
 # Usual run until a terminal state is reached
 while not state.has_ended:
@@ -54,21 +54,21 @@ while not state.has_ended:
     # The current player has to take an action
     player = state.player
 
-    # For debugging and serialization, a game-dependent JSON object is provided
-    json_like = state.to_json()
-
-    # For modelling features, a game-dependent tuple of NumPy arrays is provided
-    arrays = state.get_tensors()
+    # For modelling features, a game-dependent set of properties are available
+    print(state.grid)
 
     # At least one action is available
     actions = state.actions
     action = random.choice(actions)
 
-    # States and actions are immutable, the next is a new object
-    # Note: similar to the initial state, the next state may be non-deterministic
+    # Alternatively, some games provide helpers to select an action
+    action = state.action_at(2)
+
+    # States and actions are immutable, the next one is a new object
+    # Note: similar to the initial state, the transition may be non-deterministic
     state = action.sample_next_state()
 
-# When the game has ended, the reward is provided as a NumPy array
+# When the game has ended, the reward for each player is provided as a NumPy array
 reward = state.reward
 ```
 
@@ -81,9 +81,17 @@ pytest -v
 
 Available games:
 
- * "Bounce", a homebrew game I heard of. I was unable to find anything online, including the actual name...
  * [Connect 4](https://en.wikipedia.org/wiki/Connect_Four)
- * [Chinese checkers](https://en.wikipedia.org/wiki/Chinese_checkers), 2 players only
+
+
+## Developer notes
+
+During development, it may be faster to avoid a new environment setup, by building using the following command:
+
+```
+pip install nanobind scikit-build-core[pyproject] cmake
+pip install --no-build-isolation -ve .
+```
 
 
 ## References

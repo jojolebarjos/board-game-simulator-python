@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.18...3.27)
 
 project(
     ${SKBUILD_PROJECT_NAME}-py
@@ -11,16 +11,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include(FetchContent)
 FetchContent_Declare(
-    game
+    game-cpp
     GIT_REPOSITORY https://github.com/jojolebarjos/board-game-simulator.git
-    GIT_TAG 8b872d3d27b85a7f136afe56b9f569092bd7f1fd
+    GIT_TAG b047bbdfa1913f0f56cabb26abb30c2637d3705d
     GIT_SHALLOW 1
 )
-FetchContent_MakeAvailable(game)
+FetchContent_MakeAvailable(game-cpp)
 
-find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+find_package(Python 3.8
+    REQUIRED COMPONENTS Interpreter Development.Module NumPy
+    OPTIONAL_COMPONENTS Development.SABIModule
+)
 
-python_add_library(_core MODULE src/module.cpp WITH_SOABI)
-target_link_libraries(_core PRIVATE game Python::Module Python::NumPy)
+find_package(nanobind CONFIG REQUIRED)
 
-install(TARGETS _core DESTINATION ${SKBUILD_PROJECT_NAME})
+nanobind_add_module(game STABLE_ABI
+    src/simulator/game/module.cpp
+    src/simulator/game/connect.cpp
+)
+target_link_libraries(game PRIVATE game-cpp)
+
+install(TARGETS game LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
