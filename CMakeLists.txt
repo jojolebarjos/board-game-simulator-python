@@ -13,7 +13,7 @@ include(FetchContent)
 FetchContent_Declare(
     game-cpp
     GIT_REPOSITORY https://github.com/jojolebarjos/board-game-simulator.git
-    GIT_TAG b047bbdfa1913f0f56cabb26abb30c2637d3705d
+    GIT_TAG 4dab5ce9c412ad9ff5a77e3f47ea17ec7b65428e
     GIT_SHALLOW 1
 )
 FetchContent_MakeAvailable(game-cpp)
@@ -27,6 +27,7 @@ find_package(nanobind CONFIG REQUIRED)
 
 nanobind_add_module(game STABLE_ABI
     src/simulator/game/module.cpp
+    src/simulator/game/bounce.cpp
     src/simulator/game/connect.cpp
 )
 target_link_libraries(game PRIVATE game-cpp)

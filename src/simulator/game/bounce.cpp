@@ -2,7 +2,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 
-#include <game/connect.hpp>
+#include <game/bounce.hpp>
 #include "./tensor.hpp"
 
 
@@ -10,19 +10,16 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 using namespace game;
-using namespace game::connect;
+using namespace game::bounce;
 
 
-nb::module_ create_connect_module(nb::module_ parent) {
-    nb::module_ m = parent.def_submodule("connect");
+nb::module_ create_bounce_module(nb::module_ parent) {
+    nb::module_ m = parent.def_submodule("bounce");
 
     nb::class_<Config>(m, "Config")
-        .def(nb::new_([](int height, int width, int count){ return std::make_shared<Config>(height, width, count); }))
-        // TODO should work since https://github.com/wjakob/nanobind/pull/676: "height"_a, "width"_a, "count"_a
+        .def(nb::new_([](tensor<int8_t, -1, -1> const& grid){ return std::make_shared<Config>(grid); }))
         .def_ro_static("num_players", &Config::num_players)
-        .def_ro("height", &Config::height)
-        .def_ro("width", &Config::width)
-        .def_ro("count", &Config::count)
+        .def_ro("grid", &Config::grid)
         .def("sample_initial_state", &Config::sample_initial_state);
 
     nb::class_<State>(m, "State")
@@ -32,11 +29,13 @@ nb::module_ create_connect_module(nb::module_ parent) {
         .def_prop_ro("reward", &State::get_reward)
         .def_ro("grid", &State::grid)
         .def_prop_ro("actions", &State::actions)
+        .def("actions_at", &State::actions_at)
         .def("action_at", &State::action_at);
 
     nb::class_<Action>(m, "Action")
         .def_ro("state", &Action::state)
-        .def_ro("column", &Action::column)
+        .def_ro("source", &Action::source)
+        .def_ro("target", &Action::target)
         .def("sample_next_state", &Action::sample_next_state);
 
     return m;
