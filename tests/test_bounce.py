@@ -16,7 +16,7 @@ def parse(string):
             assert match
             steps = match.captures(1)
             rows.append(steps)
-    height = len(rows) - 2
+    height = len(rows)
     width = len(rows[0])
     assert all(len(row) == width for row in rows)
 
@@ -24,10 +24,10 @@ def parse(string):
     grid = np.zeros((height, width), dtype=np.int8)
     selections = []
     targets = []
-    for y, steps in enumerate(rows[::-1], -1):
+    for y, steps in enumerate(rows[::-1]):
         for x, (piece, marker) in enumerate(steps):
             if piece.isdigit():
-                assert 0 <= y < height
+                assert 0 < y < height - 1
                 grid[y, x] = int(piece)
             if piece == "*":
                 targets.append((x, y))

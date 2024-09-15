@@ -13,7 +13,7 @@ include(FetchContent)
 FetchContent_Declare(
     game-cpp
     GIT_REPOSITORY https://github.com/jojolebarjos/board-game-simulator.git
-    GIT_TAG 4dab5ce9c412ad9ff5a77e3f47ea17ec7b65428e
+    GIT_TAG 1f57ced33bc7a59310363fe54dcadc714434a443
     GIT_SHALLOW 1
 )
 FetchContent_MakeAvailable(game-cpp)
