@@ -281,6 +281,27 @@ def test_normal():
     assert state.reward.tolist() == [1, -1]
 
 
+def test_last_row():
+    _, action = assert_state(
+        """
+         . .[*]. . .
+         . * 1 3 2 1
+         . * . * . .
+         * 2 * . * .
+         . * 3 . . *
+         2 * * * . .
+         1 * * . * 1
+         . .[3]3 2 .
+         . . . . . .
+        """,
+    )
+    state = action.sample_next_state()
+
+    assert state.has_ended
+    assert len(state.actions) == 0
+    assert state.reward.tolist() == [1, -1]
+
+
 def test_larger_values():
     _, action = assert_state(
         """

@@ -82,6 +82,7 @@ pytest -v
 Available games:
 
  * [Connect 4](https://en.wikipedia.org/wiki/Connect_Four)
+ * "Bounce", a homebrew game I heard of. I was unable to find anything online, including the actual name...
 
 
 ## Developer notes
