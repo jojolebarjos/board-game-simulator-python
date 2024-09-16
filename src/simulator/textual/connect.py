@@ -81,6 +81,9 @@ class ConnectBoard(Widget, can_focus=True):
     def column_at(self, x: int) -> int:
         return (x + 1) // 2 - 1
 
+    def watch_state(self, old_state: State, new_state: State) -> None:
+        self.cursor_column = min(self.cursor_column, new_state.config.width - 1)
+
     def reset(self) -> None:
         self.post_message(self.Reset(self))
 
