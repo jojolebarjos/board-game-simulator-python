@@ -39,7 +39,7 @@ The following snippets provide a summary of the interface:
 import random
 
 # All games have roughly the same API, choosing Connect4 here
-from game.connect import Config, State, Action
+from simulator.game.connect import Config, State, Action
 
 # Game-wide information is stored in a configuration object
 config = Config(6, 7, 4)
@@ -62,7 +62,7 @@ while not state.has_ended:
     action = random.choice(actions)
 
     # Alternatively, some games provide helpers to select an action
-    action = state.action_at(2)
+    # action = state.action_at(2)
 
     # States and actions are immutable, the next one is a new object
     # Note: similar to the initial state, the transition may be non-deterministic

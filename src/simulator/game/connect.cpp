@@ -43,6 +43,7 @@ nb::module_ create_connect_module(nb::module_ parent) {
         .def_ro("column", &Action::column)
         .def("sample_next_state", &Action::sample_next_state);
 
+    bind_comparisons(config);
     bind_comparisons(state);
     bind_comparisons(action);
 
