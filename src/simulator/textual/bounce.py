@@ -6,7 +6,7 @@ from rich.segment import Segment
 
 from textual import events
 from textual.app import App, ComposeResult
-from textual.geometry import Offset
+from textual.geometry import Offset, Size
 from textual.message import Message
 from textual.reactive import reactive
 from textual.strip import Strip
@@ -28,6 +28,8 @@ class BounceBoard(Widget, can_focus=True):
 
     DEFAULT_CSS = """
     BounceBoard {
+        width: auto;
+        height: auto;
         padding: 1;
 
         &> .bounceboard--empty {
@@ -61,20 +63,22 @@ class BounceBoard(Widget, can_focus=True):
         ("down", "cursor_down", "Cursor Down"),
     ]
 
-    DEFAULT_GRID = np.array([
-        [0, 0, 0, 0, 0, 0],
-        [1, 2, 3, 3, 2, 1],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [1, 2, 3, 3, 2, 1],
-        [0, 0, 0, 0, 0, 0],
-    ])
-    DEFAULT_STATE = Config(DEFAULT_GRID).sample_initial_state()
+    DEFAULT_GRID = np.array(
+        [
+            [0, 0, 0, 0, 0, 0],
+            [1, 2, 3, 3, 2, 1],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [1, 2, 3, 3, 2, 1],
+            [0, 0, 0, 0, 0, 0],
+        ]
+    )
+    DEFAULT_CONFIG = Config(DEFAULT_GRID)
 
-    state: reactive[State] = reactive(DEFAULT_STATE)
+    state: reactive[State | None] = reactive(None)
     cursor_offset: reactive[Offset] = reactive(Offset(0, 0))
     source_offset: reactive[Offset | None] = reactive(None)
 
@@ -85,6 +89,8 @@ class BounceBoard(Widget, can_focus=True):
             self.board = board
             super().__init__()
 
+    # TODO add event for highlighted action
+
     class Selected(Message):
         """Action selected."""
 
@@ -92,6 +98,18 @@ class BounceBoard(Widget, can_focus=True):
             self.board = board
             self.action = action
             super().__init__()
+
+    def __init__(
+        self,
+        state: State | None = None,
+        *,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ) -> None:
+        super().__init__(name=name, id=id, classes=classes, disabled=disabled)
+        self.state = state
 
     def offset_at(self, offset: Offset) -> Offset:
         height, _ = self.state.grid.shape
@@ -109,38 +127,43 @@ class BounceBoard(Widget, can_focus=True):
         except RuntimeError:
             return []
 
-    def watch_state(self, old_state: State, new_state: State) -> None:
-        height, width = new_state.grid.shape
-        self.cursor_offset = Offset(
-            min(self.cursor_offset.x, width - 1),
-            min(self.cursor_offset.y, height - 1),
-        )
+    def watch_state(self, old_state: State | None, new_state: State | None) -> None:
+        if new_state is not None:
+            height, width = new_state.grid.shape
+            self.cursor_offset = Offset(
+                min(self.cursor_offset.x, width - 1),
+                min(self.cursor_offset.y, height - 1),
+            )
+        else:
+            self.cursor_offset = Offset(0, 0)
         self.source_offset = None
 
     def reset(self) -> None:
-        self.post_message(self.Reset(self))
+        if not self.disabled:
+            self.post_message(self.Reset(self))
 
     def select(self, offset: Offset | None = None) -> None:
-        if offset is None:
-            offset = self.cursor_offset
-        if self.source_offset is None:
-            actions = self.actions_at(offset)
-            if len(actions) > 0:
-                self.source_offset = offset
-        else:
-            action = self.action_at(self.source_offset, offset)
-            if action is None:
+        if not self.disabled:
+            if offset is None:
+                offset = self.cursor_offset
+            if self.source_offset is None:
                 actions = self.actions_at(offset)
                 if len(actions) > 0:
                     self.source_offset = offset
-                else:
-                    self.source_offset = None
             else:
-                self.post_message(self.Selected(self, action))
+                action = self.action_at(self.source_offset, offset)
+                if action is None:
+                    actions = self.actions_at(offset)
+                    if len(actions) > 0:
+                        self.source_offset = offset
+                    else:
+                        self.source_offset = None
+                else:
+                    self.post_message(self.Selected(self, action))
 
     def action_reset(self) -> None:
         self.reset()
-    
+
     def action_select(self) -> None:
         self.select()
 
@@ -172,6 +195,18 @@ class BounceBoard(Widget, can_focus=True):
     def on_click(self, event: events.Click) -> None:
         self.cursor_offset = self.offset_at(event.offset)
         self.select()
+
+    def get_content_width(self, container: Size, viewport: Size) -> int:
+        if self.state is None:
+            return 0
+        _, width = self.state.grid.shape
+        return 2 * width + 1
+
+    def get_content_height(self, container: Size, viewport: Size, width: int) -> int:
+        if self.state is None:
+            return 0
+        height, _ = self.state.grid.shape
+        return height
 
     def render_line(self, y: int) -> Strip:
         grid = self.state.grid
@@ -209,12 +244,13 @@ class BounceBoard(Widget, can_focus=True):
                 else:
                     marker = "."
                 style = empty_style
-            if offset == self.source_offset:
-                style = style + source_style
-            if offset in action_offsets:
-                style = style + target_style
-            if offset == self.cursor_offset:
-                style = style + cursor_style
+            if not self.disabled:
+                if offset == self.source_offset:
+                    style = style + source_style
+                if offset in action_offsets:
+                    style = style + target_style
+                if offset == self.cursor_offset:
+                    style = style + cursor_style
             segments.append(Segment(marker, style))
             segments.append(Segment(" "))
 
@@ -226,11 +262,12 @@ class ExampleApp(App):
     """Dummy example app."""
 
     def compose(self) -> ComposeResult:
-        yield BounceBoard()
-    
+        state = BounceBoard.DEFAULT_CONFIG.sample_initial_state()
+        yield BounceBoard(state)
+
     def on_bounce_board_reset(self, event: BounceBoard.Reset) -> None:
-        event.board.state = BounceBoard.DEFAULT_STATE
-        
+        event.board.state = BounceBoard.DEFAULT_CONFIG.sample_initial_state()
+
     def on_bounce_board_selected(self, event: BounceBoard.Selected) -> None:
         event.board.state = event.action.sample_next_state()
 

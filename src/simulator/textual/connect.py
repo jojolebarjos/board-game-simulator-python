@@ -4,6 +4,7 @@ from rich.segment import Segment
 
 from textual import events
 from textual.app import App, ComposeResult
+from textual.geometry import Size
 from textual.message import Message
 from textual.reactive import reactive
 from textual.strip import Strip
@@ -25,6 +26,8 @@ class ConnectBoard(Widget, can_focus=True):
     # TODO is there a way to allow combinatorial style (e.g. .connectboard--empty:focus), without making children widgets?
     DEFAULT_CSS = """
     ConnectBoard {
+        width: auto;
+        height: auto;
         padding: 1;
 
         &> .connectboard--empty {
@@ -58,9 +61,9 @@ class ConnectBoard(Widget, can_focus=True):
         1: "X",
     }
 
-    DEFAULT_STATE = Config(6, 7, 4).sample_initial_state()
+    DEFAULT_CONFIG = Config(6, 7, 4)
 
-    state: reactive[State] = reactive(DEFAULT_STATE)
+    state: reactive[State | None] = reactive(None)
     cursor_column: reactive[int] = reactive(0)
 
     class Reset(Message):
@@ -70,6 +73,8 @@ class ConnectBoard(Widget, can_focus=True):
             self.board = board
             super().__init__()
 
+    # TODO add event for highlighted action
+
     class Selected(Message):
         """Action selected."""
 
@@ -78,35 +83,54 @@ class ConnectBoard(Widget, can_focus=True):
             self.action = action
             super().__init__()
 
+    def __init__(
+        self,
+        state: State | None = None,
+        *,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ) -> None:
+        super().__init__(name=name, id=id, classes=classes, disabled=disabled)
+        self.state = state
+
     def column_at(self, x: int) -> int:
         return (x + 1) // 2 - 1
 
-    def watch_state(self, old_state: State, new_state: State) -> None:
-        self.cursor_column = min(self.cursor_column, new_state.config.width - 1)
+    def watch_state(self, old_state: State | None, new_state: State | None) -> None:
+        if new_state is not None:
+            self.cursor_column = min(self.cursor_column, new_state.config.width - 1)
+        else:
+            self.cursor_column = 0
 
     def reset(self) -> None:
-        self.post_message(self.Reset(self))
+        if not self.disabled:
+            self.post_message(self.Reset(self))
 
     def select(self, column: int | None = None) -> None:
-        if column is None:
-            column = self.cursor_column
-        try:
-            action = self.state.action_at(column)
-        except RuntimeError:
-            return
-        self.post_message(self.Selected(self, action))
+        if not self.disabled and self.state is not None:
+            if column is None:
+                column = self.cursor_column
+            try:
+                action = self.state.action_at(column)
+            except RuntimeError:
+                return
+            self.post_message(self.Selected(self, action))
 
     def action_reset(self) -> None:
         self.reset()
-    
+
     def action_select(self) -> None:
         self.select()
 
     def action_cursor_left(self) -> None:
-        self.cursor_column = (self.cursor_column - 1) % self.state.config.width
+        if self.state is not None:
+            self.cursor_column = (self.cursor_column - 1) % self.state.config.width
 
     def action_cursor_right(self) -> None:
-        self.cursor_column = (self.cursor_column + 1) % self.state.config.width
+        if self.state is not None:
+            self.cursor_column = (self.cursor_column + 1) % self.state.config.width
 
     # TODO do we need to call event.stop()?
 
@@ -117,13 +141,26 @@ class ConnectBoard(Widget, can_focus=True):
         self.cursor_column = self.column_at(event.offset.x)
         self.select()
 
+    def get_content_width(self, container: Size, viewport: Size) -> int:
+        if self.state is None:
+            return 0
+        return 2 * self.state.config.width + 1
+
+    def get_content_height(self, container: Size, viewport: Size, width: int) -> int:
+        if self.state is None:
+            return 0
+        return self.state.config.height
+
     def render_line(self, y: int) -> Strip:
+        if self.state is None:
+            return Strip.blank(self.size.width)
+
         grid = self.state.grid
         height, width = grid.shape
 
         if y >= height:
             return Strip.blank(self.size.width)
-        
+
         styles = {
             -1: self.get_component_rich_style("connectboard--empty"),
             0: self.get_component_rich_style("connectboard--o"),
@@ -137,7 +174,7 @@ class ConnectBoard(Widget, can_focus=True):
         for x in range(width):
             player = grid[height - y - 1, x]
             style = styles[player]
-            if x == self.cursor_column:
+            if not self.disabled and x == self.cursor_column:
                 style = style + cursor_style
             segments.append(Segment(self.MARKERS[player], style))
             segments.append(Segment(" "))
@@ -150,11 +187,12 @@ class ExampleApp(App):
     """Dummy example app."""
 
     def compose(self) -> ComposeResult:
-        yield ConnectBoard()
-    
+        state = ConnectBoard.DEFAULT_CONFIG.sample_initial_state()
+        yield ConnectBoard(state)
+
     def on_connect_board_reset(self, event: ConnectBoard.Reset) -> None:
-        event.board.state = ConnectBoard.DEFAULT_STATE
-        
+        event.board.state = ConnectBoard.DEFAULT_CONFIG.sample_initial_state()
+
     def on_connect_board_selected(self, event: ConnectBoard.Selected) -> None:
         event.board.state = event.action.sample_next_state()
 
