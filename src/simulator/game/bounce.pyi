@@ -4,6 +4,7 @@ class Config:
     num_players: int
     grid: np.ndarray
 
+    def __init__(self, grid: np.ndarray) -> None: ...
     def sample_initial_state(self) -> State: ...
 
 class State:
@@ -14,7 +15,7 @@ class State:
     grid: np.ndarray
     actions: list[Action]
 
-    def actions_at(self, source: np.ndarray) -> Action: ...
+    def actions_at(self, source: np.ndarray) -> list[Action]: ...
     def action_at(self, source: np.ndarray, target: np.ndarray) -> Action: ...
 
 class Action:

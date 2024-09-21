@@ -6,6 +6,7 @@ class Config:
     width: int
     count: int
 
+    def __init__(self, height: int, width: int, count: int) -> None: ...
     def sample_initial_state(self) -> State: ...
 
 class State:
