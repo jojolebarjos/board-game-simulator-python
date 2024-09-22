@@ -1,7 +1,5 @@
 #include <nanobind/nanobind.h>
 
-#include "./tensor.hpp"
-
 
 namespace nb = nanobind;
 using namespace nb::literals;

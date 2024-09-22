@@ -16,9 +16,7 @@ def parse(string):
     # Check for column selector
     selected_column = None
     if "v" in lines[0]:
-        selected_column = (
-            len(re.fullmatch(r"( *)v\s*", lines[0]).group(1)) - indent
-        ) // 2
+        selected_column = (len(re.fullmatch(r"( *)v\s*", lines[0]).group(1)) - indent) // 2
         del lines[0]
 
     # Parse grid
@@ -115,3 +113,34 @@ def test_small():
         state,
     )
     np.testing.assert_array_equal(state.reward, [1, -1])
+
+
+def test_json():
+    """Test JSON conversion."""
+
+    config = Config(2, 3, 2)
+
+    assert config.to_json() == {
+        "height": 2,
+        "width": 3,
+        "count": 2,
+    }
+    assert Config.from_json(config.to_json()) == config
+
+    state = config.sample_initial_state().action_at(0).sample_next_state()
+    assert state.to_json() == {
+        "config": config.to_json(),
+        "grid": [
+            [0, -1, -1],
+            [-1, -1, -1],
+        ],
+        "player": 1,
+    }
+    assert State.from_json(state.to_json()) == state
+
+    action = state.action_at(1)
+    assert action.to_json() == {
+        "state": state.to_json(),
+        "column": 1,
+    }
+    assert Action.from_json(action.to_json()) == action

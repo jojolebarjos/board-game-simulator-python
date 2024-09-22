@@ -3,7 +3,9 @@
 #include <nanobind/stl/vector.h>
 
 #include <game/connect.hpp>
+
 #include "./helper.hpp"
+#include "./json.hpp"
 #include "./tensor.hpp"
 
 
@@ -25,7 +27,9 @@ nb::module_ create_connect_module(nb::module_ parent) {
         .def_ro("height", &Config::height)
         .def_ro("width", &Config::width)
         .def_ro("count", &Config::count)
-        .def("sample_initial_state", &Config::sample_initial_state);
+        .def("sample_initial_state", &Config::sample_initial_state)
+        .def("to_json", &Config::to_json)
+        .def_static("from_json", &Config::from_json);
 
     nb::class_<State> state(m, "State");
     state
@@ -35,13 +39,17 @@ nb::module_ create_connect_module(nb::module_ parent) {
         .def_prop_ro("reward", &State::get_reward)
         .def_prop_ro("grid", &State::get_grid)
         .def_prop_ro("actions", &State::get_actions)
-        .def("action_at", &State::get_action_at);
+        .def("action_at", &State::get_action_at)
+        .def("to_json", &State::to_json)
+        .def_static("from_json", &State::from_json);
 
     nb::class_<Action> action(m, "Action");
     action
         .def_ro("state", &Action::state)
         .def_ro("column", &Action::column)
-        .def("sample_next_state", &Action::sample_next_state);
+        .def("sample_next_state", &Action::sample_next_state)
+        .def("to_json", &Action::to_json)
+        .def_static("from_json", &Action::from_json);
 
     bind_comparisons(config);
     bind_comparisons(state);

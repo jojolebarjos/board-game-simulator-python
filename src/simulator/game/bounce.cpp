@@ -3,7 +3,9 @@
 #include <nanobind/stl/vector.h>
 
 #include <game/bounce.hpp>
+
 #include "./helper.hpp"
+#include "./json.hpp"
 #include "./tensor.hpp"
 
 
@@ -22,7 +24,9 @@ nb::module_ create_bounce_module(nb::module_ parent) {
         .def(nb::new_([](tensor<int8_t, -1, -1> const& grid){ return std::make_shared<Config>(grid); }))
         .def_ro_static("num_players", &Config::num_players)
         .def_prop_ro("grid", &Config::get_grid)
-        .def("sample_initial_state", &Config::sample_initial_state);
+        .def("sample_initial_state", &Config::sample_initial_state)
+        .def("to_json", &Config::to_json)
+        .def_static("from_json", &Config::from_json);
 
     nb::class_<State> state(m, "State");
     state
@@ -33,14 +37,18 @@ nb::module_ create_bounce_module(nb::module_ parent) {
         .def_prop_ro("grid", &State::get_grid)
         .def_prop_ro("actions", &State::get_actions)
         .def("actions_at", &State::get_actions_at)
-        .def("action_at", &State::get_action_at);
+        .def("action_at", &State::get_action_at)
+        .def("to_json", &State::to_json)
+        .def_static("from_json", &State::from_json);
 
     nb::class_<Action> action(m, "Action");
     action
         .def_ro("state", &Action::state)
         .def_prop_ro("source", &Action::get_source)
         .def_prop_ro("target", &Action::get_target)
-        .def("sample_next_state", &Action::sample_next_state);
+        .def("sample_next_state", &Action::sample_next_state)
+        .def("to_json", &Action::to_json)
+        .def_static("from_json", &Action::from_json);
 
     bind_comparisons(config);
     bind_comparisons(state);

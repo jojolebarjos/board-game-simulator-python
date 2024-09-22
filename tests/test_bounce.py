@@ -77,10 +77,7 @@ def assert_state(string, state=None):
         assert piece_selection is not None
 
         # Get associated actions
-        actions = {
-            tuple(action.target): action
-            for action in state.actions_at(np.array(piece_selection))
-        }
+        actions = {tuple(action.target): action for action in state.actions_at(np.array(piece_selection))}
 
         # Actions must be exhaustively highlighted
         assert set(targets) == set(actions.keys())
@@ -363,3 +360,52 @@ def test_draw():
     assert state.has_ended
     assert len(state.actions) == 0
     assert state.reward.tolist() == [0, 0]
+
+
+def test_json():
+    """Test JSON conversion."""
+
+    state, action = assert_state(
+        """
+         . . .
+         1 2 3
+         . * .
+        [*]. *
+         1[2]3
+         . . .
+        """,
+    )
+    config = state.config
+
+    assert config.to_json() == {
+        "grid": [
+            [0, 0, 0],
+            [1, 2, 3],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 2, 3],
+            [0, 0, 0],
+        ],
+    }
+    assert Config.from_json(config.to_json()) == config
+
+    assert state.to_json() == {
+        "config": config.to_json(),
+        "grid": [
+            [0, 0, 0],
+            [1, 2, 3],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 2, 3],
+            [0, 0, 0],
+        ],
+        "player": 0,
+    }
+    assert State.from_json(state.to_json()) == state
+
+    assert action.to_json() == {
+        "state": state.to_json(),
+        "source": [1, 1],
+        "target": [0, 2],
+    }
+    assert Action.from_json(action.to_json()) == action
