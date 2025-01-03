@@ -129,18 +129,16 @@ def test_json():
 
     state = config.sample_initial_state().action_at(0).sample_next_state()
     assert state.to_json() == {
-        "config": config.to_json(),
         "grid": [
             [0, -1, -1],
             [-1, -1, -1],
         ],
         "player": 1,
     }
-    assert State.from_json(state.to_json()) == state
+    assert State.from_json(state.to_json(), config) == state
 
     action = state.action_at(1)
     assert action.to_json() == {
-        "state": state.to_json(),
         "column": 1,
     }
-    assert Action.from_json(action.to_json()) == action
+    assert Action.from_json(action.to_json(), state) == action

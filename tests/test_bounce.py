@@ -390,7 +390,6 @@ def test_json():
     assert Config.from_json(config.to_json()) == config
 
     assert state.to_json() == {
-        "config": config.to_json(),
         "grid": [
             [0, 0, 0],
             [1, 2, 3],
@@ -401,11 +400,10 @@ def test_json():
         ],
         "player": 0,
     }
-    assert State.from_json(state.to_json()) == state
+    assert State.from_json(state.to_json(), config) == state
 
     assert action.to_json() == {
-        "state": state.to_json(),
         "source": [1, 1],
         "target": [0, 2],
     }
-    assert Action.from_json(action.to_json()) == action
+    assert Action.from_json(action.to_json(), state) == action
