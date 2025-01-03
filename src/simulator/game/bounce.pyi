@@ -1,8 +1,10 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 
 class Config:
+    State: ClassVar[type]
+
     num_players: int
     grid: np.ndarray
 
@@ -13,6 +15,8 @@ class Config:
     def from_json(value: dict[str, Any]) -> Config: ...
 
 class State:
+    Action: ClassVar[type]
+
     config: Config
     has_ended: bool
     player: int

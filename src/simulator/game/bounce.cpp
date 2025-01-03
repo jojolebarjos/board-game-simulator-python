@@ -52,4 +52,7 @@ NB_MODULE(bounce, m) {
     bind_comparisons(config);
     bind_comparisons(state);
     bind_comparisons(action);
+
+    config.def_prop_ro_static("State", [=](nb::handle){ return state; });
+    state.def_prop_ro_static("Action", [=](nb::handle){ return action; });
 }
