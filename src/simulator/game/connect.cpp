@@ -16,8 +16,7 @@ using namespace game;
 using namespace game::connect;
 
 
-nb::module_ create_connect_module(nb::module_ parent) {
-    nb::module_ m = parent.def_submodule("connect");
+NB_MODULE(connect, m) {
 
     nb::class_<Config> config(m, "Config");
     config
@@ -54,6 +53,4 @@ nb::module_ create_connect_module(nb::module_ parent) {
     bind_comparisons(config);
     bind_comparisons(state);
     bind_comparisons(action);
-
-    return m;
 }

@@ -16,8 +16,7 @@ using namespace game;
 using namespace game::bounce;
 
 
-nb::module_ create_bounce_module(nb::module_ parent) {
-    nb::module_ m = parent.def_submodule("bounce");
+NB_MODULE(bounce, m) {
 
     nb::class_<Config> config(m, "Config");
     config
@@ -53,6 +52,4 @@ nb::module_ create_bounce_module(nb::module_ parent) {
     bind_comparisons(config);
     bind_comparisons(state);
     bind_comparisons(action);
-
-    return m;
 }

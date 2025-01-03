@@ -25,11 +25,14 @@ find_package(Python 3.8
 
 find_package(nanobind CONFIG REQUIRED)
 
-nanobind_add_module(game STABLE_ABI
-    src/simulator/game/module.cpp
+nanobind_add_module(bounce STABLE_ABI
     src/simulator/game/bounce.cpp
+)
+target_link_libraries(bounce PRIVATE game-cpp)
+
+nanobind_add_module(connect STABLE_ABI
     src/simulator/game/connect.cpp
 )
-target_link_libraries(game PRIVATE game-cpp)
+target_link_libraries(connect PRIVATE game-cpp)
 
-install(TARGETS game LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS bounce connect LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME}/game)
