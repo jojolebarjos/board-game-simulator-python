@@ -13,7 +13,7 @@ Upon reaching a terminal state, a reward is assigned based on the outcome of the
 The library can be installed directly from GitHub:
 
 ```
-pip install git+https://github.com/jojolebarjos/board-game-simulator-python.git@0.0.4
+pip install git+https://github.com/jojolebarjos/board-game-simulator-python.git@0.0.5
 ```
 
 Alternatively, the repository can be downloaded locally:
@@ -72,10 +72,9 @@ while not state.has_ended:
 reward = state.reward
 ```
 
-Additionally, some example [`scripts`](./scripts/) and [`tests`](./tests/) are provided:
+Additionally, some [`tests`](./tests/) are provided:
 
 ```
-python ./scripts/benchmark.py
 pytest -v
 ```
 
