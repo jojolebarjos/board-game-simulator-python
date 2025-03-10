@@ -1,7 +1,7 @@
 -e .
-numpy==1.26.4
-pre-commit==3.7.1
-pytest==8.2.0
-regex==2024.5.10
-ruff==0.4.4
-textual==0.79.1
+numpy==2.2.3
+pre-commit==4.1.0
+pytest==8.3.5
+regex==2024.11.6
+ruff==0.8.4
+textual==2.1.2

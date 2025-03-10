@@ -7,7 +7,7 @@ cmake.build-type = "RelWithDebInfo"
 
 [project]
 name = "simulator"
-version = "0.0.5"
+version = "0.0.6"
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
