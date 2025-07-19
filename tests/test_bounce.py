@@ -399,6 +399,7 @@ def test_json():
             [0, 0, 0],
         ],
         "player": 0,
+        "winner": -1,
     }
     assert State.from_json(state.to_json(), config) == state
 

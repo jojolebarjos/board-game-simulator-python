@@ -134,6 +134,7 @@ def test_json():
             [-1, -1, -1],
         ],
         "player": 1,
+        "winner": -1,
     }
     assert State.from_json(state.to_json(), config) == state
 
