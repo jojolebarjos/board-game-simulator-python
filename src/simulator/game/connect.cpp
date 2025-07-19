@@ -18,6 +18,9 @@ using namespace game::connect;
 
 NB_MODULE(connect, m) {
 
+    // TODO currently, the leaks are not blowing up, but we should fix this properly
+    nb::set_leak_warnings(false);
+
     nb::class_<Config> config(m, "Config");
     config
         .def(nb::new_([](int height, int width, int count){ return std::make_shared<Config>(height, width, count); }))

@@ -18,6 +18,9 @@ using namespace game::bounce;
 
 NB_MODULE(bounce, m) {
 
+    // TODO currently, the leaks are not blowing up, but we should fix this properly
+    nb::set_leak_warnings(false);
+
     nb::class_<Config> config(m, "Config");
     config
         .def(nb::new_([](tensor<int8_t, -1, -1> const& grid){ return std::make_shared<Config>(grid); }))
