@@ -66,7 +66,7 @@ struct type_caster<game::tensor<T, N...>> {
     }
 
     // TODO move semantics and ref const
-    static handle from_cpp(game::tensor<T, N...> value, rv_policy, cleanup_list* cleanup) noexcept {
+    static handle from_cpp(game::tensor<T, N...> value, rv_policy, cleanup_list* cleanup) {
 
         T* ptr = value.data();
         Shape shape = value.shape();

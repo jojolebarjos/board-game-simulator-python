@@ -111,7 +111,7 @@ struct type_caster<nlohmann::json> {
         }
     }
 
-    static handle from_cpp(nlohmann::json const& value, rv_policy, cleanup_list* cleanup) noexcept {
+    static handle from_cpp(nlohmann::json const& value, rv_policy, cleanup_list* cleanup) {
         return game::from_json(value).release();
     }
 };

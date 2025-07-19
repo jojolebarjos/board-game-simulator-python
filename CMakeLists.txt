@@ -24,12 +24,16 @@ find_package(Python 3.8
 
 find_package(nanobind CONFIG REQUIRED)
 
-nanobind_add_module(bounce STABLE_ABI
+nanobind_add_module(bounce
+    STABLE_ABI
+    NB_DOMAIN board_game_simulator_python
     src/simulator/game/bounce.cpp
 )
 target_link_libraries(bounce PRIVATE game-cpp)
 
-nanobind_add_module(connect STABLE_ABI
+nanobind_add_module(connect
+    STABLE_ABI
+    NB_DOMAIN board_game_simulator_python
     src/simulator/game/connect.cpp
 )
 target_link_libraries(connect PRIVATE game-cpp)
